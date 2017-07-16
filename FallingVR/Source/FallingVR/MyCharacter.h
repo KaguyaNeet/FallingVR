@@ -25,6 +25,11 @@ public:
 
 	void FaceButtonPressed();
 	void FaceButtonReleased();
+
+	void SetAllowFire(bool Choose);
+
+	class AMyWeaponBase* GetMyRightHandWeapon();
+	bool SetMyRightHandWeapon(class AMyWeaponBase MyWeaponBase);
 	
 public:
 	UPROPERTY(VisibleAnywhere)
@@ -37,6 +42,13 @@ public:
 		class UStaticMeshComponent* RightControllerMesh;
 	UPROPERTY(VisibleAnywhere)
 		class UStaticMeshComponent* LeftControllerMesh;
+private:
+	bool RightTriggerOn = false;
+	bool LeftTriggerOn = false;
+	bool AllowFire = true;
+
+	class AMyWeaponBase* MyRightHandWeapon;
+
 
 protected:
 	// Called when the game starts or when spawned

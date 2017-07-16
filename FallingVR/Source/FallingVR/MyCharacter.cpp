@@ -5,6 +5,7 @@
 #include "Components/ArrowComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "MyWeaponBase.h"
 
 AMyCharacter::AMyCharacter()
 {
@@ -55,20 +56,20 @@ void AMyCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 
 void AMyCharacter::TriggerLeftPressed()
 {
-
+	LeftTriggerOn = true;
 }
 void AMyCharacter::TriggerLeftReleased()
 {
-
+	LeftTriggerOn = false;
 }
 
 void AMyCharacter::TriggerRightPressed()
 {
-
+	RightTriggerOn = true;
 }
 void AMyCharacter::TriggerRightReleased()
 {
-
+	RightTriggerOn = false;
 }
 
 void AMyCharacter::FaceButtonPressed()
@@ -79,4 +80,42 @@ void AMyCharacter::FaceButtonPressed()
 void AMyCharacter::FaceButtonReleased()
 {
 
+}
+
+void AMyCharacter::SetAllowFire(bool Choose)
+{
+	AllowFire = Choose;
+}
+
+AMyWeaponBase* AMyCharacter::GetMyRightHandWeapon()
+{
+	if (MyRightHandWeapon)
+	{
+		return MyRightHandWeapon;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+bool AMyCharacter::SetMyRightHandWeapon(AMyWeaponBase MyWeaponBase)
+{
+	UWorld* MyWorld = GetWorld();
+	FVector RightHandLocation = ControllerRight->GetComponentLocation();
+	FRotator RightHandRotation = ControllerRight->GetComponentRotation();
+	FTransform RightHandTransform = FTransform(RightHandRotation, RightHandLocation, FVector(1.f, 1.f, 1.f));
+
+	if (MyWorld)
+	{
+		AMyWeaponBase* RightHandWeapon = MyWorld->SpawnActor<AMyWeaponBase>(RightHandLocation, RightHandRotation);
+		MyRightHandWeapon->DestroyWeapon();
+		MyRightHandWeapon = RightHandWeapon;
+		MyRightHandWeapon->BeginInit();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

@@ -15,6 +15,10 @@ public:
 	// Sets default values for this actor's properties
 	AMyWeaponBase();
 
+	void BeginInit();
+
+	void DestroyWeapon();
+
 public:
 
 	UPROPERTY(VisibleAnywhere)

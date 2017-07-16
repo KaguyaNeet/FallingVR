@@ -38,6 +38,16 @@ void AMyWeaponBase::Tick(float DeltaTime)
 
 }
 
+void AMyWeaponBase::BeginInit()
+{
+
+}
+
+void AMyWeaponBase::DestroyWeapon()
+{
+
+}
+
 void AMyWeaponBase::InitCanFire()
 {
 	CanFire = true;
