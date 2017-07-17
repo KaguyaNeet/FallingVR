@@ -15,6 +15,36 @@ public:
 	// Sets default values for this actor's properties
 	AMyItemBase();
 
+	virtual void DestroyItem();
+	virtual void InitItem(class AMyCharacterBase* Owner_);
+
+	void UseItem();
+	virtual void ItemFunction();
+
+	void SetAllowUse(bool Choose);
+
+	class AMyCharacterBase* GetOwner();
+	bool SetOwner(class AMyCharacterBase* Owner_);
+
+public:
+
+	UPROPERTY(VisibleAnywhere)
+		class UStaticMeshComponent* ItemMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Property")
+		float CDtime = 1.f;
+
+private:
+
+	class AMyCharacterBase* Owner = NULL;
+	FTimerHandle UseRateTimerHandle;
+	bool isCD = false;
+	bool AllowUse = true;
+
+private:
+
+	void InitCD();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -5,21 +5,32 @@
 #include "Components/ArrowComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "MyWeaponBase.h"
+#include "MyItemBase.h"
+#include "MyWeapon.h"
+
 
 AMyCharacter::AMyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	//设置默认的胶囊碰撞体（根组件）的碰撞类型为无碰撞
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	//创建Camera组件并绑定于根组件
 	MyCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("MyCamera"));
 	MyCamera->AttachTo(RootComponent);
 
+	//创建左右控制器
+	//将左右控制器绑定于根组件
+	//创建左右手的Mesh
+	//将左右手Mesh绑定于相应的控制器
+	//设置左右手的Mesh为无碰撞
+	//创建左右手的绑定提示箭头
+	//将左右箭头绑定于Mesh组件
 	ControllerRight = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("MotionControllerRight"));
-	ControllerRight->AttachTo(MyCamera);
+	ControllerRight->AttachTo(RootComponent);
 	ControllerLeft = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("MotionControllerLeft"));
-	ControllerLeft->AttachTo(MyCamera);
+	ControllerLeft->AttachTo(RootComponent);
 
 	RightControllerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightControllerMesh"));
 	RightControllerMesh->AttachTo(ControllerRight);
@@ -27,6 +38,11 @@ AMyCharacter::AMyCharacter()
 	LeftControllerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftControllerMesh"));
 	LeftControllerMesh->AttachTo(ControllerLeft);
 	LeftControllerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	RightControllerAttachArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("RightControllerAttachArrow"));
+	RightControllerAttachArrow->AttachTo(RightControllerMesh);
+	LeftControllerAttachArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("LeftControllerAttachArrow"));
+	LeftControllerAttachArrow->AttachTo(LeftControllerMesh);
 }
 
 
@@ -41,7 +57,7 @@ void AMyCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AMyCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -50,8 +66,10 @@ void AMyCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction("TriggerRight", IE_Pressed, this, &AMyCharacter::TriggerRightPressed);
 	PlayerInputComponent->BindAction("TriggerRight", IE_Released, this, &AMyCharacter::TriggerRightReleased);
 
-	PlayerInputComponent->BindAction("FaceButton", IE_Pressed, this, &AMyCharacter::FaceButtonPressed);
-	PlayerInputComponent->BindAction("FaceButton", IE_Released, this, &AMyCharacter::FaceButtonReleased);
+	PlayerInputComponent->BindAction("FaceButtonRight", IE_Pressed, this, &AMyCharacter::FaceButtonRightPressed);
+	PlayerInputComponent->BindAction("FaceButtonRight", IE_Released, this, &AMyCharacter::FaceButtonRightReleased);
+	PlayerInputComponent->BindAction("FaceButtonLeft", IE_Pressed, this, &AMyCharacter::FaceButtonLeftPressed);
+	PlayerInputComponent->BindAction("FaceButtonLeft", IE_Released, this, &AMyCharacter::FaceButtonLeftReleased);
 }
 
 void AMyCharacter::TriggerLeftPressed()
@@ -72,14 +90,24 @@ void AMyCharacter::TriggerRightReleased()
 	RightTriggerOn = false;
 }
 
-void AMyCharacter::FaceButtonPressed()
+void AMyCharacter::FaceButtonRightPressed()
 {
-
+	FaceButtonRightOn = true;
+}
+void AMyCharacter::FaceButtonRightReleased()
+{
+	FaceButtonRightOn = false;
+	SetMyRightHandWeapon(NowWeapon);
 }
 
-void AMyCharacter::FaceButtonReleased()
+void AMyCharacter::FaceButtonLeftPressed()
 {
-
+	FaceButtonLeftOn = true;
+}
+void AMyCharacter::FaceButtonLeftReleased()
+{
+	FaceButtonLeftOn = false;
+	SetMyLeftHandItem(NowItem);
 }
 
 void AMyCharacter::SetAllowFire(bool Choose)
@@ -87,35 +115,101 @@ void AMyCharacter::SetAllowFire(bool Choose)
 	AllowFire = Choose;
 }
 
-AMyWeaponBase* AMyCharacter::GetMyRightHandWeapon()
+AMyItemBase* AMyCharacter::GetMyItem(EMyHand::Type NewType)
 {
-	if (MyRightHandWeapon)
+	switch (NewType)
 	{
-		return MyRightHandWeapon;
-	}
-	else
+	case EMyHand::LeftHand: if (MyLeftHandItem)
 	{
-		return NULL;
+		return MyLeftHandItem;
 	}
+							else
+							{
+								return NULL;
+							}
+							break;
+
+	case EMyHand::RightHand: if (MyRightHandItem)
+	{
+		return MyRightHandItem;
+	}
+							 else
+							 {
+								 return NULL;
+							 }
+							 break;
+	}
+	return NULL;
 }
 
-bool AMyCharacter::SetMyRightHandWeapon(AMyWeaponBase MyWeaponBase)
+//设置右手的武器（右手只能拿武器）
+//参数：EMyWeapon 在MyEnums.h中查看
+//返回bool，true为设置成功，false为设置失败
+bool AMyCharacter::SetMyRightHandWeapon(EMyWeapon::Type NewType)
 {
+	//将当前使用的武器类型变为NewType
+	CurrentWeapon = NewType;
 	UWorld* MyWorld = GetWorld();
-	FVector RightHandLocation = ControllerRight->GetComponentLocation();
-	FRotator RightHandRotation = ControllerRight->GetComponentRotation();
-	FTransform RightHandTransform = FTransform(RightHandRotation, RightHandLocation, FVector(1.f, 1.f, 1.f));
+	//武器的生成Transform参数
+	FVector RightHandLocation = RightControllerAttachArrow->GetComponentLocation();
+	FRotator RightHandRotation = RightControllerAttachArrow->GetComponentRotation();
 
 	if (MyWorld)
 	{
-		AMyWeaponBase* RightHandWeapon = MyWorld->SpawnActor<AMyWeaponBase>(RightHandLocation, RightHandRotation);
-		MyRightHandWeapon->DestroyWeapon();
-		MyRightHandWeapon = RightHandWeapon;
-		MyRightHandWeapon->BeginInit();
+		AMyItemBase* RightHandItem = MyWorld->SpawnActor<AMyWeapon>(RightHandLocation, RightHandRotation);
+		//将武器绑定于箭头上
+		RightHandItem->AttachToComponent(RightControllerAttachArrow, FAttachmentTransformRules::KeepRelativeTransform);
+		RightHandItem->SetActorRelativeLocation(FVector(0.f, 0.f, 0.f));
+		RightHandItem->SetActorRelativeRotation(FRotator(0.f, 0.f, 0.f));
+		if (MyRightHandItem)
+		{
+			MyRightHandItem->DestroyItem();
+		}
+		MyRightHandItem = RightHandItem;
+		//执行武器的初始化
+		Cast<AMyWeapon>(MyRightHandItem)->InitItem(this, NewType);
 		return true;
 	}
 	else
 	{
 		return false;
 	}
+}
+
+//设置左手的道具（左手只能拿道具）
+//参数：EMyItem 在MyEnums.h中查看
+//返回bool，true为设置成功，false为设置失败
+bool AMyCharacter::SetMyLeftHandItem(EMyItem::Type NewType)
+{
+	UWorld* MyWorld = GetWorld();
+	FVector LeftHandLocation = LeftControllerAttachArrow->GetComponentLocation();
+	FRotator LeftHandRotation = LeftControllerAttachArrow->GetComponentRotation();
+
+	if (MyWorld)
+	{
+		AMyItemBase* LeftHandItem = MyWorld->SpawnActor<AMyItemBase>(LeftHandLocation, LeftHandRotation);
+		LeftHandItem->AttachToComponent(LeftControllerAttachArrow, FAttachmentTransformRules::KeepRelativeTransform);
+		LeftHandItem->SetActorRelativeLocation(FVector(0.f, 0.f, 0.f));
+		LeftHandItem->SetActorRelativeRotation(FRotator(0.f, 0.f, 0.f));
+		if (MyLeftHandItem)
+		{
+			MyLeftHandItem->DestroyItem();
+		}
+		MyLeftHandItem = LeftHandItem;
+		MyLeftHandItem->InitItem(this);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+EMyWeapon::Type AMyCharacter::GetCurrentWeaponType()
+{
+	return CurrentWeapon;
+}
+EMyItem::Type AMyCharacter::GetCurrentItemType()
+{
+	return CurrentItem;
 }
