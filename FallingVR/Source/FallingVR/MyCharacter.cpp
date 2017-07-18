@@ -75,19 +75,44 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AMyCharacter::TriggerLeftPressed()
 {
 	LeftTriggerOn = true;
+	if (IsValid(MyLeftHandItem))
+	{
+		MyLeftHandItem->UseItem();
+	}
+
 }
 void AMyCharacter::TriggerLeftReleased()
 {
 	LeftTriggerOn = false;
+	MyLeftHandItem->PauseFunction();
 }
 
 void AMyCharacter::TriggerRightPressed()
 {
 	RightTriggerOn = true;
+	if (IsValid(MyRightHandItem))
+	{
+		AMyWeapon* MyRightHandWeapon = Cast<AMyWeapon>(MyRightHandItem);
+		if (MyRightHandWeapon->One_handed)
+		{
+			MyRightHandWeapon->UseItem();
+		}
+		else
+		{
+			if (LeftTriggerOn)
+			{
+				if (GetTwoMotionControllerDistance() < MyRightHandWeapon->TwoHandMaxDistance && GetTwoMotionControllerDistance() > MyRightHandWeapon->TwoHandMinDistance)
+				{
+					RunningFireWeaponOn = true;
+				}
+			}
+		}
+	}
 }
 void AMyCharacter::TriggerRightReleased()
 {
 	RightTriggerOn = false;
+	RunningFireWeaponOn = false;
 }
 
 void AMyCharacter::FaceButtonRightPressed()
@@ -108,6 +133,11 @@ void AMyCharacter::FaceButtonLeftReleased()
 {
 	FaceButtonLeftOn = false;
 	SetMyLeftHandItem(NowItem);
+}
+
+float AMyCharacter::GetTwoMotionControllerDistance()
+{
+	return FMath::Abs((ControllerRight->GetComponentLocation() - ControllerLeft->GetComponentLocation()).Size());
 }
 
 void AMyCharacter::SetAllowFire(bool Choose)
@@ -212,4 +242,21 @@ EMyWeapon::Type AMyCharacter::GetCurrentWeaponType()
 EMyItem::Type AMyCharacter::GetCurrentItemType()
 {
 	return CurrentItem;
+}
+
+bool AMyCharacter::GetTriggerState(EMyHand::Type NewType)
+{
+	if (NewType == EMyHand::RightHand)
+	{
+		return RightTriggerOn;
+	}
+	else
+	{
+		return LeftTriggerOn;
+	}
+}
+
+bool AMyCharacter::GetRunningFireWeaponOn()
+{
+	return RunningFireWeaponOn;
 }

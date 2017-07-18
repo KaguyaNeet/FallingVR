@@ -34,7 +34,7 @@ void AMyCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 }
 
 //÷¥––…À∫¶
-void AMyCharacterBase::ApplyDamage(float DamageValue, AMyCharacterBase* Causer, FHitResult& HitResult)
+void AMyCharacterBase::ApplyDamage(float DamageValue, AMyCharacterBase* Causer, const FHitResult& HitResult)
 {
 	//º∆À„…À∫¶
 	LifeValue -= DamageValue;

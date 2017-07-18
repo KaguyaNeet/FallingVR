@@ -59,6 +59,10 @@ public:
 	//获得当前的道具类型
 	//返回EMyItem 在MyEnums.h中查看
 	EMyItem::Type GetCurrentItemType();
+
+	bool GetTriggerState(EMyHand::Type NewType);
+
+	bool GetRunningFireWeaponOn();
 	
 public:
 	//Camera组件，也就是游戏的主视角
@@ -94,6 +98,7 @@ private:
 	bool FaceButtonLeftOn = false;
 	//枪的保险开关， true为允许射击， false为不允许射击
 	bool AllowFire = true;
+	bool RunningFireWeaponOn = false;
 
 	//目前正在用的武器种类
 	EMyWeapon::Type CurrentWeapon = EMyWeapon::Pistol;
@@ -109,6 +114,9 @@ private:
 	//左手的武器
 	class AMyItemBase* MyLeftHandItem;
 
+private:
+
+	float GetTwoMotionControllerDistance();
 
 protected:
 	// Called when the game starts or when spawned

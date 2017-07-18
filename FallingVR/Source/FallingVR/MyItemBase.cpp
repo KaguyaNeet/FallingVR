@@ -10,8 +10,8 @@ AMyItemBase::AMyItemBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
-	ItemMesh->AttachTo(RootComponent);
+	//ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
+	//ItemMesh->AttachTo(RootComponent);
 
 }
 
@@ -81,6 +81,11 @@ void AMyItemBase::SetAllowUse(bool Choose)
 }
 
 void AMyItemBase::ItemFunction()
+{
+
+}
+
+void AMyItemBase::PauseFunction()
 {
 
 }

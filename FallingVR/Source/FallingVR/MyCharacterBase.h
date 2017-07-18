@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#include "MyEnums.h"
 #pragma once
 
 #include "CoreMinimal.h"
@@ -15,7 +15,7 @@ public:
 	// Sets default values for this character's properties
 	AMyCharacterBase();
 	//执行伤害
-	virtual void ApplyDamage(float DamageValue, AMyCharacterBase* Causer, FHitResult& HitResult);
+	virtual void ApplyDamage(float DamageValue, AMyCharacterBase* Causer, const FHitResult& HitResult);
 	//执行死亡
 	virtual void ApplyDeath(AMyCharacterBase* Causer);
 
@@ -40,5 +40,7 @@ public:
 	//被击中时的栗子特效
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Default Property")
 		UParticleSystem* UnderAttackParticle;
+
+	EMyElement::Type MyElementType = EMyElement::None;
 	
 };

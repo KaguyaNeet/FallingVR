@@ -20,6 +20,7 @@ public:
 
 	void UseItem();
 	virtual void ItemFunction();
+	virtual void PauseFunction();
 
 	void SetAllowUse(bool Choose);
 
@@ -28,8 +29,8 @@ public:
 
 public:
 
-	UPROPERTY(VisibleAnywhere)
-		class UStaticMeshComponent* ItemMesh;
+	//UPROPERTY(VisibleAnywhere)
+	//	class UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Property")
 		float CDtime = 1.f;

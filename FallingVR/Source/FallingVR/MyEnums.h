@@ -27,7 +27,8 @@ namespace EMyWeapon
 		Pistol,
 		Rifle,
 		MiniGun,
-		Sniper
+		Sniper,
+		Shotgun
 	};
 }
 
@@ -46,8 +47,22 @@ namespace EMyItem
 {
 	enum Type
 	{
+		None,
 		FlashSphere,
 		Shield,
 		Shock
+	};
+}
+
+UENUM()
+namespace EMyElement
+{
+	enum Type
+	{
+		None,
+		Fire,
+		Ice,
+		Explosion,
+		Poison
 	};
 }
