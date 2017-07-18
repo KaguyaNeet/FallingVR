@@ -6,21 +6,29 @@
 #include "MyCharacterBase.h"
 #include "MyBulletBase.h"
 #include "MyCharacter.h"
+#include "Engine/DataTable.h"
+#include "ConstructorHelpers.h"
+#include "MyStructs.h"
 
 AMyWeapon::AMyWeapon()
 {
+	HandArrow1 = CreateDefaultSubobject<UArrowComponent>(TEXT("HandArrow1"));
+	HandArrow1->AttachTo(RootComponent);
+
+	HandArrow2 = CreateDefaultSubobject<UArrowComponent>(TEXT("HandArrow2"));
+	HandArrow2->AttachTo(RootComponent);
+
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->AttachTo(RootComponent);
+	WeaponMesh->AttachTo(HandArrow1);
 
 	MuzzleArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("MuzzleArrow"));
 	MuzzleArrow->AttachTo(WeaponMesh);
 
-	HandArrow1 = CreateDefaultSubobject<UArrowComponent>(TEXT("HandArrow1"));
-	HandArrow1->AttachTo(WeaponMesh);
-
-	HandArrow2 = CreateDefaultSubobject<UArrowComponent>(TEXT("HandArrow2"));
-	HandArrow2->AttachTo(WeaponMesh);
-
+	ConstructorHelpers::FObjectFinder<UDataTable> TempData(TEXT("DataTable'/Game/Blueprint/DWeapon.DWeapon'"));
+	if (TempData.Succeeded())
+	{
+		WeaponData = TempData.Object;
+	}
 }
 
 void AMyWeapon::Tick(float DeltaTime)
@@ -36,6 +44,25 @@ void AMyWeapon::Tick(float DeltaTime)
 void AMyWeapon::InitItem(class AMyCharacterBase* Owner_, EMyWeapon::Type NewType)
 {
 	Super::InitItem(Owner_);
+	if (IsValid(WeaponData))
+	{
+		MyWeaponType = NewType;
+		TArray<FName> WeaponDataName = WeaponData->GetRowNames();
+		FWeaponType* MyType = WeaponData->FindRow<FWeaponType>(WeaponDataName[NewType], TEXT(""));
+		WeaponMesh->SetSkeletalMesh(MyType->WeaponMesh);
+		One_handed = MyType->One_Handed;
+		CDtime = MyType->FireCD;
+		MuzzleArrow->SetRelativeLocation(MyType->MuzzleOffset);
+		WeaponMesh->SetRelativeLocation(MyType->MeshOffset);
+		BaseDamageValue = MyType->BaseDamageValue;
+		FireDistance = MyType->FireRange;
+		MuzzleParticle = MyType->MuzzleParticle;
+		LineTraceBulletParticle = MyType->BulletParticle;
+		RunningFire = MyType->RunningFire;
+		TwoHandMaxDistance = MyType->TwoHandMaxDistance;
+		TwoHandMinDistance = MyType->TwoHandMinDistance;
+	}
+
 }
 
 void AMyWeapon::ItemFunction()
@@ -98,14 +125,11 @@ void AMyWeapon::BulletIsMultiTrace()
 
 	for (int i = 0; i < ShotGunBulletNum; i++)
 	{
-		MuzzleArrow->SetRelativeRotation(FRotator(0.f, FMath::RandRange(-10.f, 10.f), FMath::RandRange(-10.f, 10.f)));
+		MuzzleArrow->SetRelativeRotation(FRotator(FMath::RandRange(-10.f, 10.f), FMath::RandRange(-10.f, 10.f), FMath::RandRange(-10.f, 10.f)));
 		FTransform BulletTransform = MuzzleArrow->GetComponentTransform();
 		FVector LineEnd = LineStart + MuzzleArrow->GetForwardVector() * FireDistance;
-		UGameplayStatics::SpawnEmitterAtLocation(MyWorld, LineTraceBulletParticle, BulletTransform);
-		if (MyWorld->LineTraceSingleByChannel(TraceHit, LineStart, LineEnd, ECollisionChannel::ECC_WorldDynamic))
-		{
-			AddDamage(BaseDamageValue, TraceHit, GetOwner());
-		}
+		AMyBulletBase* TempBullet = MyWorld->SpawnActor<AMyBulletBase>(MuzzleArrow->GetComponentLocation(), MuzzleArrow->GetComponentRotation());
+		TempBullet->BeginInit(GetOwner(), MyWeaponType, GetOwner()->MyElementType);
 	}
 	MuzzleArrow->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 }

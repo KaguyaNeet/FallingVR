@@ -41,6 +41,7 @@ AMyCharacter::AMyCharacter()
 
 	RightControllerAttachArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("RightControllerAttachArrow"));
 	RightControllerAttachArrow->AttachTo(RightControllerMesh);
+	RightControllerAttachArrow->SetRelativeRotation(FRotator(0.f, -50.f, 0.f));
 	LeftControllerAttachArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("LeftControllerAttachArrow"));
 	LeftControllerAttachArrow->AttachTo(LeftControllerMesh);
 }
@@ -49,6 +50,8 @@ AMyCharacter::AMyCharacter()
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetMyRightHandWeapon(EMyWeapon::Shotgun);
 }
 
 
@@ -95,7 +98,14 @@ void AMyCharacter::TriggerRightPressed()
 		AMyWeapon* MyRightHandWeapon = Cast<AMyWeapon>(MyRightHandItem);
 		if (MyRightHandWeapon->One_handed)
 		{
-			MyRightHandWeapon->UseItem();
+			if (MyRightHandWeapon->RunningFire)
+			{
+				RunningFireWeaponOn = true;
+			}
+			else
+			{
+				MyRightHandWeapon->UseItem();
+			}
 		}
 		else
 		{
@@ -191,7 +201,7 @@ bool AMyCharacter::SetMyRightHandWeapon(EMyWeapon::Type NewType)
 		RightHandItem->AttachToComponent(RightControllerAttachArrow, FAttachmentTransformRules::KeepRelativeTransform);
 		RightHandItem->SetActorRelativeLocation(FVector(0.f, 0.f, 0.f));
 		RightHandItem->SetActorRelativeRotation(FRotator(0.f, 0.f, 0.f));
-		if (MyRightHandItem)
+		if (IsValid(MyRightHandItem))
 		{
 			MyRightHandItem->DestroyItem();
 		}

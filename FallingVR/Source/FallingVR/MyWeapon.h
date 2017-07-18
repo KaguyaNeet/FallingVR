@@ -65,6 +65,8 @@ private:
 
 	UParticleSystem* LineTraceBulletParticle = NULL;
 
+	class UDataTable* WeaponData;
+
 protected:
 
 	virtual void Tick(float DeltaTime) override;

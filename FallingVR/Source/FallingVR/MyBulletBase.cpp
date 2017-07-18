@@ -4,6 +4,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "MyCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "ConstructorHelpers.h"
 
 // Sets default values
 AMyBulletBase::AMyBulletBase()
@@ -11,21 +12,31 @@ AMyBulletBase::AMyBulletBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	bReplicateMovement = true;
+	ConstructorHelpers::FObjectFinder<UStaticMesh> TempCube(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	ConstructorHelpers::FObjectFinder<UMaterial> TempMaterial(TEXT("Material'/Game/Material/M_Bullet.M_Bullet'"));
 
 	MovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("MovementComponent"));
 	MovementComponent->Velocity = FVector(1000.f, 0.f, 0.f);
+	MovementComponent->InitialSpeed = 3000.f;
+	MovementComponent->MaxSpeed = 3000.f;
 
 	BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BulletMesh"));
 	BulletMesh->AttachTo(RootComponent);
 	BulletMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BulletMesh->SetStaticMesh(TempCube.Object);
+	BulletMesh->SetMaterial(0, TempMaterial.Object);
+	BulletMesh->SetWorldScale3D(FVector(1.f, 0.1f, 0.1f));
+	BulletMesh->SetEnableGravity(false);
 
 	CollisionMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollisionMesh"));
 	CollisionMesh->AttachTo(RootComponent);
+	CollisionMesh->SetEnableGravity(false);
 	CollisionMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CollisionMesh->SetCollisionObjectType(ECC_EngineTraceChannel1);
 	CollisionMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	CollisionMesh->OnComponentBeginOverlap.AddDynamic(this, &AMyBulletBase::CollisionBeginOverlap);
+
+	
 }
 
 // Called when the game starts or when spawned
