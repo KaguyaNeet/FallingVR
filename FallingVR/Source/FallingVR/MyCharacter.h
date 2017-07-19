@@ -117,6 +117,7 @@ private:
 private:
 
 	float GetTwoMotionControllerDistance();
+	bool IsTwoHandAllow();
 
 protected:
 	// Called when the game starts or when spawned

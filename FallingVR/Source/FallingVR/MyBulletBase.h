@@ -15,7 +15,7 @@ public:
 	// Sets default values for this actor's properties
 	AMyBulletBase();
 
-	void BeginInit(class AMyCharacterBase* Owner_, EMyWeapon::Type NewWeaponType, EMyElement::Type NewElementType);
+	void BeginInit(const struct FBulletParam& BulletParam, class AMyCharacterBase* Owner_, EMyWeapon::Type NewWeaponType, EMyElement::Type NewElementType);
 
 	void DestroyBullet(FVector HitLocation);
 
@@ -32,19 +32,27 @@ private:
 	UFUNCTION()
 		void CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherCompnent, int32 OtherBodyIndex, bool FromSweep, const FHitResult& Hit);
 
-	void BulletFunction();
+	void BulletFunction(FVector HitLocation);
+	void DestroySelf();
 private:
 
 	class AMyCharacterBase* Owner = NULL;
 
-	float BaseDamage = 10.f;
+	float BaseDamage = 100.f;
+	float ElementLevel = 1.f;
 
-	UParticleSystem* HitParticle = NULL;
-	UParticleSystem* DestroyParticle = NULL;
-	UParticleSystem* SelfParticle = NULL;
+	FTimerHandle DestroyHandle;
+
+	UPROPERTY()
+		UParticleSystem* HitParticle = NULL;
+	UPROPERTY()
+		UParticleSystem* DestroyParticle = NULL;
 
 	EMyElement::Type MyElementType = EMyElement::None;
 	EMyWeapon::Type MyWeaponType = EMyWeapon::Pistol;
+
+	UPROPERTY()
+		class UDataTable* WeaponData;
 
 protected:
 	// Called when the game starts or when spawned

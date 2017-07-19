@@ -5,6 +5,8 @@
 #include "MyCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "ConstructorHelpers.h"
+#include "Engine/DataTable.h"
+#include "MyStructs.h"
 
 // Sets default values
 AMyBulletBase::AMyBulletBase()
@@ -14,11 +16,18 @@ AMyBulletBase::AMyBulletBase()
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh> TempCube(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 	ConstructorHelpers::FObjectFinder<UMaterial> TempMaterial(TEXT("Material'/Game/Material/M_Bullet.M_Bullet'"));
+	ConstructorHelpers::FObjectFinder<UDataTable> TempData(TEXT("DataTable'/Game/Blueprint/DWeapon.DWeapon'"));
+
+	if (TempData.Succeeded())
+	{
+		WeaponData = TempData.Object;
+	}
 
 	MovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("MovementComponent"));
 	MovementComponent->Velocity = FVector(1000.f, 0.f, 0.f);
 	MovementComponent->InitialSpeed = 3000.f;
 	MovementComponent->MaxSpeed = 3000.f;
+	MovementComponent->ProjectileGravityScale = 0.f;
 
 	BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BulletMesh"));
 	BulletMesh->AttachTo(RootComponent);
@@ -43,7 +52,6 @@ AMyBulletBase::AMyBulletBase()
 void AMyBulletBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -53,8 +61,17 @@ void AMyBulletBase::Tick(float DeltaTime)
 
 }
 
-void AMyBulletBase::BeginInit(AMyCharacterBase* Owner_, EMyWeapon::Type NewWeaponType, EMyElement::Type NewElementType)
+void AMyBulletBase::BeginInit(const FBulletParam& BulletParam, AMyCharacterBase* Owner_, EMyWeapon::Type NewWeaponType, EMyElement::Type NewElementType)
 {
+	MovementComponent->MaxSpeed = BulletParam.MaxSpeed;
+	GetWorldTimerManager().SetTimer(DestroyHandle, this, &AMyBulletBase::DestroySelf, BulletParam.LifeTime);
+	BulletMesh->SetWorldScale3D(BulletParam.BulletSize);
+	BulletMesh->SetMaterial(0, BulletParam.BulletMaterial);
+	HitParticle = BulletParam.HitParticle;
+	DestroyParticle = BulletParam.ExplosionParticle;
+	BaseDamage = BulletParam.BaseDamageValue;
+	ElementLevel = BulletParam.ElementLevel;
+
 	if (IsValid(Owner_))
 	{
 		Owner = Owner_;
@@ -62,10 +79,13 @@ void AMyBulletBase::BeginInit(AMyCharacterBase* Owner_, EMyWeapon::Type NewWeapo
 
 	MyWeaponType = NewWeaponType;
 	MyElementType = NewElementType;
+
+
 	UWorld* MyWorld = GetWorld();
 	if (IsValid(MyWorld))
 	{
-		UGameplayStatics::SpawnEmitterAttached(SelfParticle, BulletMesh);
+		UGameplayStatics::SpawnEmitterAttached(BulletParam.ElementParticle, BulletMesh);
+		UGameplayStatics::SpawnEmitterAttached(BulletParam.BulletTraceParticle, BulletMesh);
 	}
 }
 
@@ -84,20 +104,35 @@ void AMyBulletBase::CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent,
 		{
 			if (AMyCharacterBase* HitCharacter = Cast<AMyCharacterBase>(OtherActor))
 			{
-				HitCharacter->ApplyDamage(BaseDamage, Owner, Hit);
+				HitCharacter->ApplyDamage(MyElementType, ElementLevel, BaseDamage, Owner, Hit);
 			}
 			if (IsValid(MyWorld))
 			{
 				UGameplayStatics::SpawnEmitterAtLocation(MyWorld, HitParticle, HitNormalTransform, true);
-				BulletFunction();
+				BulletFunction(Hit.ImpactPoint);
 			}
 		}
 	}
 }
 
-void AMyBulletBase::BulletFunction()
+void AMyBulletBase::BulletFunction(FVector HitLocation)
 {
-
+	UWorld* MyWorld = GetWorld();
+	FTransform HitTransform = FTransform(FRotator(0.f, 0.f, 0.f), HitLocation, FVector(1.f, 1.f, 1.f));
+	if (IsValid(MyWorld))
+	{
+		if (MyElementType == EMyElement::Explosion)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(MyWorld, DestroyParticle, HitTransform, true);
+			TArray<AActor*> IgnoreActor;
+			UGameplayStatics::ApplyRadialDamage(GetWorld(), BaseDamage * ElementLevel, HitLocation, 100.f * ElementLevel, NULL, IgnoreActor, Owner);
+			return;
+		}
+		if (MyElementType == EMyElement::Ice)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(MyWorld, DestroyParticle, HitTransform, true);
+		}
+	}
 }
 
 void AMyBulletBase::DestroyBullet(FVector HitLocation)
@@ -109,5 +144,11 @@ void AMyBulletBase::DestroyBullet(FVector HitLocation)
 		UGameplayStatics::SpawnEmitterAtLocation(MyWorld, DestroyParticle, HitTransform, true);
 	}
 	Destroy(true);
+}
+
+void AMyBulletBase::DestroySelf()
+{
+	GetWorldTimerManager().ClearTimer(DestroyHandle);
+	Destroy();
 }
 

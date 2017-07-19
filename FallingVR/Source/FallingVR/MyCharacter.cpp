@@ -96,9 +96,9 @@ void AMyCharacter::TriggerRightPressed()
 	if (IsValid(MyRightHandItem))
 	{
 		AMyWeapon* MyRightHandWeapon = Cast<AMyWeapon>(MyRightHandItem);
-		if (MyRightHandWeapon->One_handed)
+		if (MyRightHandWeapon->GetWeaponOneHanded())
 		{
-			if (MyRightHandWeapon->RunningFire)
+			if (MyRightHandWeapon->isRunningFire())
 			{
 				RunningFireWeaponOn = true;
 			}
@@ -111,7 +111,7 @@ void AMyCharacter::TriggerRightPressed()
 		{
 			if (LeftTriggerOn)
 			{
-				if (GetTwoMotionControllerDistance() < MyRightHandWeapon->TwoHandMaxDistance && GetTwoMotionControllerDistance() > MyRightHandWeapon->TwoHandMinDistance)
+				if (IsTwoHandAllow())
 				{
 					RunningFireWeaponOn = true;
 				}
@@ -269,4 +269,17 @@ bool AMyCharacter::GetTriggerState(EMyHand::Type NewType)
 bool AMyCharacter::GetRunningFireWeaponOn()
 {
 	return RunningFireWeaponOn;
+}
+
+bool AMyCharacter::IsTwoHandAllow()
+{
+	AMyWeapon* MyRightHandWeapon = Cast<AMyWeapon>(MyRightHandItem);
+	if (GetTwoMotionControllerDistance() < MyRightHandWeapon->GetTwoAllowRange().Y && GetTwoMotionControllerDistance() > MyRightHandWeapon->GetTwoAllowRange().X)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

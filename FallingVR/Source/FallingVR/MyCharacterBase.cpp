@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 #include "MyCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "MyStructs.h"
 
 
 // Sets default values
@@ -34,7 +34,7 @@ void AMyCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 }
 
 //执行伤害
-void AMyCharacterBase::ApplyDamage(float DamageValue, AMyCharacterBase* Causer, const FHitResult& HitResult)
+void AMyCharacterBase::ApplyDamage(EMyElement::Type DamageType, float ElementLevel, float DamageValue, AMyCharacterBase* Causer, const FHitResult& HitResult)
 {
 	//计算伤害
 	LifeValue -= DamageValue;
@@ -45,12 +45,6 @@ void AMyCharacterBase::ApplyDamage(float DamageValue, AMyCharacterBase* Causer, 
 	FVector DamageNormal = HitResult.ImpactNormal;
 	FRotator DamageRotation = DamageNormal.Rotation();
 	FTransform DamageTransform = FTransform(DamageRotation, DamageLocation, FVector(1.f, 1.f, 1.f));
-
-	//生成击中身体的栗子特效
-	if (MyWorld)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(MyWorld, UnderAttackParticle, DamageTransform, true);
-	}
 
 	//判断是否死亡
 	if (LifeValue <= 0)
@@ -65,3 +59,23 @@ void AMyCharacterBase::ApplyDeath(AMyCharacterBase* Causer)
 
 }
 
+void AMyCharacterBase::ApplyElementDamage(EMyElement::Type DamageType, float ParamElementLevel)
+{
+	if (DamageType == EMyElement::Ice)
+	{
+
+	}
+	if (DamageType == EMyElement::Fire)
+	{
+
+	}
+	if (DamageType == EMyElement::Poison)
+	{
+
+	}
+}
+
+float AMyCharacterBase::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	return 0;
+}

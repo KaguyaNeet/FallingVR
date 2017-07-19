@@ -15,10 +15,11 @@ public:
 	// Sets default values for this character's properties
 	AMyCharacterBase();
 	//执行伤害
-	virtual void ApplyDamage(float DamageValue, AMyCharacterBase* Causer, const FHitResult& HitResult);
+	virtual void ApplyDamage(EMyElement::Type DamageType, float ElementLevel, float DamageValue, AMyCharacterBase* Causer, const FHitResult& HitResult);
 	//执行死亡
 	virtual void ApplyDeath(AMyCharacterBase* Causer);
 
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -30,6 +31,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void ApplyElementDamage(EMyElement::Type DamageType, float ParamElementLevel);
+
 public:
 	//最大生命值
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Default Property")
@@ -39,7 +42,7 @@ public:
 		float LifeValue = 100.f;
 	//被击中时的栗子特效
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Default Property")
-		UParticleSystem* UnderAttackParticle;
+		UParticleSystem* FireParticle;
 
 	EMyElement::Type MyElementType = EMyElement::None;
 	
