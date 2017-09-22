@@ -40,10 +40,11 @@ AMyBulletBase::AMyBulletBase()
 	CollisionMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollisionMesh"));
 	CollisionMesh->AttachTo(RootComponent);
 	CollisionMesh->SetEnableGravity(false);
-	CollisionMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionMesh->SetCollisionObjectType(ECC_EngineTraceChannel1);
-	CollisionMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	CollisionMesh->OnComponentBeginOverlap.AddDynamic(this, &AMyBulletBase::CollisionBeginOverlap);
+	CollisionMesh->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
+	//CollisionMesh->OnComponentBeginOverlap.AddDynamic(this, &AMyBulletBase::CollisionBeginOverlap);
+	CollisionMesh->OnComponentHit.AddDynamic(this, &AMyBulletBase::CollisionHit);
 
 	
 }
@@ -89,11 +90,37 @@ void AMyBulletBase::BeginInit(const FBulletParam& BulletParam, AMyCharacterBase*
 	}
 }
 
-void AMyBulletBase::CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherCompnent, int32 OtherBodyIndex, bool FromSweep, const FHitResult& Hit)
+//void AMyBulletBase::CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherCompnent, int32 OtherBodyIndex, bool FromSweep, const FHitResult& Hit)
+//{
+//	UWorld* MyWorld = GetWorld();
+//	FVector HitLocation = Hit.ImpactPoint;
+//	FRotator HitRotation = Hit.ImpactNormal.Rotation();
+//	FVector DefaultSize = FVector(1.f, 1.f, 1.f);
+//	FTransform HitNormalTransform = FTransform(HitRotation, HitLocation, DefaultSize);
+//	FTransform HitTransform = FTransform(FRotator(0.f, 0.f, 0.f), HitLocation, DefaultSize);
+//
+//	if (IsValid(Owner))
+//	{
+//		if (OtherActor != Owner)
+//		{
+//			if (AMyCharacterBase* HitCharacter = Cast<AMyCharacterBase>(OtherActor))
+//			{
+//				HitCharacter->ApplyDamage(MyElementType, ElementLevel, BaseDamage, Owner, Hit);
+//			}
+//			if (IsValid(MyWorld))
+//			{
+//				UGameplayStatics::SpawnEmitterAtLocation(MyWorld, HitParticle, HitNormalTransform, true);
+//				BulletFunction(Hit.ImpactPoint);
+//			}
+//		}
+//	}
+//}
+
+void AMyBulletBase::CollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
 	UWorld* MyWorld = GetWorld();
-	FVector HitLocation = Hit.ImpactPoint;
-	FRotator HitRotation = Hit.ImpactNormal.Rotation();
+	FVector HitLocation = Hit.Location;
+	FRotator HitRotation = NormalImpulse.Rotation();
 	FVector DefaultSize = FVector(1.f, 1.f, 1.f);
 	FTransform HitNormalTransform = FTransform(HitRotation, HitLocation, DefaultSize);
 	FTransform HitTransform = FTransform(FRotator(0.f, 0.f, 0.f), HitLocation, DefaultSize);
@@ -109,7 +136,7 @@ void AMyBulletBase::CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent,
 			if (IsValid(MyWorld))
 			{
 				UGameplayStatics::SpawnEmitterAtLocation(MyWorld, HitParticle, HitNormalTransform, true);
-				BulletFunction(Hit.ImpactPoint);
+				BulletFunction(Hit.Location);
 			}
 		}
 	}

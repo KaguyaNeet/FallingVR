@@ -29,8 +29,11 @@ public:
 		class UStaticMeshComponent* CollisionMesh;
 
 private:
+	//UFUNCTION()
+	//	void CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherCompnent, int32 OtherBodyIndex, bool FromSweep, const FHitResult& Hit);
+
 	UFUNCTION()
-		void CollisionBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherCompnent, int32 OtherBodyIndex, bool FromSweep, const FHitResult& Hit);
+		void CollisionHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 
 	void BulletFunction(FVector HitLocation);
 	void DestroySelf();
